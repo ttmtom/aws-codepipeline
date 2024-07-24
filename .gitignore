@@ -25,5 +25,5 @@ dist-ssr
 
 cdk.out
 
-buildspecs/**/*
+**/buildspecs
 config.yaml
