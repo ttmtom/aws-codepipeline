@@ -1,0 +1,43 @@
+version: 0.2
+
+env:
+  git-credential-helper: yes
+
+phases:
+  pre_build:
+    commands:
+      - echo "build post deploy"
+      - echo $TARGET_BRANCH
+      - git checkout $TARGET_BRANCH
+      - npm ci --production
+      - npm install typescript
+      - sudo npm install -g aws-cdk
+      - printenv
+      - |
+        if [ "$TAG_VERSION" = "true" ]; then
+          echo "Tagging version"
+          latest_tag=$(git describe --tags --match "$TARGET_BRANCH-$TARGET_ENV.*" --abbrev=0 2>/dev/null)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="$TARGET_BRANCH.0"
+          fi
+          latest_tag_number=$(echo $latest_tag | cut -d '.' -f 2)
+        
+          if echo "$latest_tag_number" | grep -q '^[0-9]\+$'; then
+            new_tag_number=$((latest_tag_number + 1))
+          else
+            new_tag_number=0
+          fi
+          new_tag="$TARGET_BRANCH.$TARGET_ENV.${new_tag_number}"
+          git tag $new_tag
+          git push origin $new_tag
+        fi
+  build:
+    commands:
+      - echo "Build"
+      - CREDENTIAL=$(aws sts assume-role --role-arn $TARGET_SERVICE_ROLE --role-session pulse-backend-deploy-codebuild --query 'Credentials')
+      - echo $CREDENTIAL
+      - export AWS_ACCESS_KEY_ID=$(echo $CREDENTIAL | jq -c ".AccessKeyId" | cut -d "\"" -f 2)
+      - export AWS_SECRET_ACCESS_KEY=$(echo $CREDENTIAL | jq -c .SecretAccessKey | cut -d "\"" -f 2)
+      - export AWS_SESSION_TOKEN=$(echo $CREDENTIAL | jq -c .SessionToken | cut -d "\"" -f 2)
+      - aws sts get-caller-identity
+      - npm run deploy:cicd $TARGET_ENV
