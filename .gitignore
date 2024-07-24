@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 cdk.out
+
+buildspecs/*
+config.yaml

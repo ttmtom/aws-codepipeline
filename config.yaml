@@ -1,0 +1,17 @@
+projectName: sample
+source: cai-commerce-external-channel-services
+codebuilds:
+  - projectName: test
+    environment:
+      image: aws/codebuild/standard:5.0
+      computeType: BUILD_GENERAL1_SMALL
+      type: LINUX_CONTAINER
+      privilegedMode: true
+    buildspec: buildspec-test.yml
+  - projectName: deploy
+    environment:
+      image: aws/codebuild/standard:5.0
+      computeType: BUILD_GENERAL1_SMALL
+      type: LINUX_CONTAINER
+      privilegedMode: true
+    buildspec: buildspec-deploy.yml
