@@ -1,6 +1,6 @@
-import { DefaultStackSynthesizer, Stack, type StackProps } from 'aws-cdk-lib'
+import { DefaultStackSynthesizer, Stack, type StackProps } from 'aws-cdk-lib';
 
-import { Construct } from 'constructs'
+import { Construct } from 'constructs';
 // import {
 //   Artifact,
 //   Pipeline,
@@ -16,11 +16,17 @@ import { Construct } from 'constructs'
 // } from 'aws-cdk-lib/aws-codepipeline-actions'
 // import { Rule } from 'aws-cdk-lib/aws-events'
 // import * as targets from 'aws-cdk-lib/aws-events-targets'
-import { DcpHelper } from './src/common/helper/DcpHelper'
-import { PipelineResource } from './src/project-resource/pipeline-resource'
+import { DcpHelper } from './src/common/helper/DcpHelper';
+import { PipelineResource } from './src/project-resource/pipeline-resource';
+import { TPipelineConfig } from './src/types/config.type';
 
 export class GeneralPipelineStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StackProps,
+    config: TPipelineConfig
+  ) {
     super(scope, id, {
       ...props,
       ...{
@@ -30,9 +36,9 @@ export class GeneralPipelineStack extends Stack {
           ...DcpHelper.getCdkOverrideRoles(props.env),
         }),
       },
-    })
+    });
 
-    const pr = new PipelineResource(this)
+    const pr = new PipelineResource(this, config);
   }
 }
 

@@ -1,17 +1,38 @@
 projectName: sample
 source: cai-commerce-external-channel-services
+iam:
+  codebuildRole:
+    principalServices:
+      - "codebuild"
+    allowActions:
+      s3:
+        actions:
+          - 'GetObject'
+          - 'GetBucket'
+          - 'List*'
+          - 'DeleteObject'
+          - 'Abort'
+          - 'PutObject'
+        resources:
+          - '*'
+      codecommit:
+        actions:
+          - '*'
+        resources:
+          - '*'
+      sts:
+        actions:
+          - 'AssumeRole'
+        resources:
+          - '*'
+      codepipeline:
+        actions:
+          - 'GetPipelineState'
+          - 'PutApprovalResult'
+        resources:
+          - '*'
 codebuilds:
   - projectName: test
-    environment:
-      image: aws/codebuild/standard:5.0
-      computeType: BUILD_GENERAL1_SMALL
-      type: LINUX_CONTAINER
-      privilegedMode: true
-    buildspec: buildspec-test.yml
+    buildSpecYaml: buildspec-test.yml
   - projectName: deploy
-    environment:
-      image: aws/codebuild/standard:5.0
-      computeType: BUILD_GENERAL1_SMALL
-      type: LINUX_CONTAINER
-      privilegedMode: true
-    buildspec: buildspec-deploy.yml
+    buildSpecYaml: buildspec-deploy.yml

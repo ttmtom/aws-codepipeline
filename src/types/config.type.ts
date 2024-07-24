@@ -10,6 +10,16 @@ const BuildEnvironmentVariableSchema: z.ZodType<BuildEnvironmentVariable> =
     value: z.string(),
   });
 
+const IamServiceRoleSchema = z.object({
+  allowActions: z.record(
+    z.object({
+      actions: z.array(z.string()),
+      resources: z.array(z.string()),
+    })
+  ),
+  principalServices: z.array(z.string()),
+});
+
 export const PipelineConfigSchema = z.object({
   projectName: z.string().min(1, { message: 'Project name is required' }),
   source: z.string().min(1, { message: 'Source is required' }),
@@ -20,6 +30,12 @@ export const PipelineConfigSchema = z.object({
       environmentVariables: z.record(BuildEnvironmentVariableSchema).optional(),
     })
   ),
+  iam: z.object({
+    // pipelineServiceRole: IamServiceRoleSchema.optional(),
+    // eventRole: IamServiceRoleSchema.optional(),
+    // lambdaRole: IamServiceRoleSchema.optional(),
+    codebuildRole: IamServiceRoleSchema,
+  }),
 });
 
 export type TPipelineConfig = z.infer<typeof PipelineConfigSchema>;
