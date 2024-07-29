@@ -1,1 +1,4 @@
+
+npm install
+
 cdk diff

@@ -31,12 +31,9 @@ function createStack() {
     throw error;
   }
 
-  const env = app.node.tryGetContext('env') ?? 'shs';
   dotenv.config({
-    path: `./envs/${env}.env`,
+    path: path.resolve(__dirname, `../../.env`),
   });
-
-  console.log('Creating pipeline stack', env);
 
   if (!fs.existsSync(path.resolve(__dirname, '../../config.yaml.ts'))) {
     console.error('config.yaml.ts not found');
