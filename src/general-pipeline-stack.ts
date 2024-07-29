@@ -69,7 +69,7 @@ class CaiPipeline extends Construct {
       lambdas,
     } = resource;
 
-    const { pipelineName, trigger, stages, environmentVariables } = props;
+    const { pipelineName, trigger, stages, variables } = props;
 
     const cicd = new Pipeline(
       this,
@@ -77,7 +77,7 @@ class CaiPipeline extends Construct {
       {
         pipelineName: `fwd-${commonConfig.projectName}-${pipelineName}-pipeline`,
         pipelineType: PipelineType.V2,
-        variables: environmentVariables.map(
+        variables: variables.map(
           (envVar) =>
             new Variable({
               variableName: envVar.variableName,
@@ -108,14 +108,12 @@ class CaiPipeline extends Construct {
                 return new CodeBuildAction({
                   type: action.configuration.type ?? CodeBuildActionType.TEST,
                   actionName: action.name,
-                  project: projects[action.projectId],
+                  project: projects[action.name],
                   input: this.getArtifact(action.configuration.inputArtifact),
                   outputs: action.configuration.hasOutput
                     ? [this.getArtifact(action.name)]
                     : [],
-                  environmentVariables: {
-                    TARGET_BRANCH: { value: '#{variables.TARGET_BRANCH}' },
-                  },
+                  environmentVariables: action.configuration.environmentVariables,
                   role: roles.pipelineServiceRole,
                 });
               } else if (isApprovalAction(action)) {

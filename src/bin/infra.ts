@@ -30,7 +30,8 @@ function createStack() {
     console.log('Validation successful:');
     console.log(JSON.stringify(config, null, 2));
   } catch (error) {
-    console.error('Validation failed:', error);
+    console.error('Validation failed:');
+    console.log(JSON.stringify(error, null, 2));
     throw error;
   }
 

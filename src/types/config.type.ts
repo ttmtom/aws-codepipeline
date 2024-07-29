@@ -46,7 +46,6 @@ type TPipelineActionBase = z.infer<typeof PipelineActionBaseSchema>;
 
 const PipelineSourceActionSchema = PipelineActionBaseSchema.extend({
   type: z.literal(PipelineActionType.SOURCE),
-  projectId: z.string().min(1, { message: 'Project id is required' }),
   configuration: z.object({
     branch: z.string().optional(),
     repositoryId: z.string().min(1, { message: 'Repository id is required' }),
@@ -63,12 +62,14 @@ export const isSourceAction = (
 
 const PipelineCodebuildActionSchema = PipelineActionBaseSchema.extend({
   type: z.literal(PipelineActionType.CODEBUILD),
-  projectId: z.string().min(1, { message: 'Project id is required' }),
   configuration: z.object({
     type: z.nativeEnum(CodeBuildActionType).optional(),
     projectName: z.string().min(1, { message: 'Project name is required' }),
     inputArtifact: z.string(),
     hasOutput: z.boolean().optional(),
+    environmentVariables: z.record(z.object({
+      value: z.string(),
+    })).optional(),
   }),
 });
 
@@ -99,8 +100,8 @@ const CodePipelineSchema = z.object({
       stageName: z.string().min(1, { message: 'Stage name is required' }),
       actions: z.array(
         z.union([
-          PipelineSourceActionSchema,
           PipelineCodebuildActionSchema,
+          PipelineSourceActionSchema,
           PipelineApprovalActionSchema,
         ])
       ),
@@ -116,7 +117,7 @@ const CodePipelineSchema = z.object({
       event: z.array(z.string()),
     }),
   }),
-  environmentVariables: z.array(
+  variables: z.array(
     z.object({
       variableName: z.string(),
       defaultValue: z.string().optional(),
