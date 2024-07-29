@@ -99,7 +99,10 @@ export class PipelineResource extends Construct implements IPipelineResource {
           buildSpec: BuildSpec.fromObject(
             yaml.load(
               fs.readFileSync(
-                path.resolve(__dirname, `../buildSpecs/${build.buildSpecYaml}`),
+                path.resolve(
+                  __dirname,
+                  `../../buildSpecs/${build.buildSpecYaml}`
+                ),
                 'utf8'
               )
             ) as {

@@ -24,6 +24,3 @@ dist-ssr
 *.sw?
 
 cdk.out
-
-**/buildspecs.sample
-sample.config.yaml

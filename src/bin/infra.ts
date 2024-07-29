@@ -38,6 +38,11 @@ function createStack() {
 
   console.log('Creating pipeline stack', env);
 
+  if (!fs.existsSync(path.resolve(__dirname, '../../config.yaml.ts'))) {
+    console.error('config.yaml.ts not found');
+    throw new Error('config.yaml.ts not found');
+  }
+
   new GeneralPipelineStack(
     app,
     `${appConfig.projectName}-pipeline-stack`,
