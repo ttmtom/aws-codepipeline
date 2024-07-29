@@ -80,7 +80,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       [key: string]: IRepository;
     } = {};
     config.sources.map((source) => {
-      repositories[source.projectId] = new Repository(this, source.projectId, {
+      repositories[source.id] = new Repository(this, `repository-${source.id}`, {
         repositoryName: source.repositoryName,
       });
     });

@@ -128,7 +128,7 @@ export const PipelineConfigSchema = z.object({
   projectName: z.string().min(1, { message: 'Project name is required' }),
   sources: z.array(
     z.object({
-      projectId: z.string().min(1, { message: 'Project id is required' }),
+      id: z.string().min(1, { message: 'Repository id is required' }),
       repositoryName: z
         .string()
         .min(1, { message: 'Repository name is required' }),
