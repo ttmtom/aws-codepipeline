@@ -1,0 +1,62 @@
+projectName: "sample"
+iam:
+  codebuildRole:
+    principalServices:
+      - "codebuild"
+    allowActions:
+      s3:
+        actions:
+          - 'GetObject'
+          - 'GetBucket'
+          - 'List*'
+          - 'DeleteObject'
+          - 'Abort'
+          - 'PutObject'
+        resources:
+          - '*'
+      codecommit:
+        actions:
+          - '*'
+        resources:
+          - '*'
+      sts:
+        actions:
+          - 'AssumeRole'
+        resources:
+          - '*'
+      codepipeline:
+        actions:
+          - 'GetPipelineState'
+          - 'PutApprovalResult'
+        resources:
+          - '*'
+sources:
+  - projectId: "bot-config"
+    repositoryName: "cai-bot-configurations"
+codebuilds:
+  - projectName: "test"
+    buildSpecYaml: "buildspec-test.yaml"
+  - projectName: "deploy"
+    buildSpecYaml: "buildspec-deploy.yaml"
+pipelines:
+  - name: "pipeline-name"
+    triggers:
+
+    action:
+      - name: "source"
+        provider: "CodeCommit"
+        outputArtifacts:
+          - "source"
+        configuration:
+          repositoryName: "cai-commerce-external-channel-services"
+          branchName: "master"
+      - name: "test"
+        provider: "CodeBuild"
+        owner: "AWS"
+        version: "1"
+        inputArtifacts:
+          - "source"
+        configuration:
+          projectName: "test"
+      - name: "approve"
+        provider: "Manual"
