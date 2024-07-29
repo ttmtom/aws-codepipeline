@@ -3,7 +3,6 @@ import {
   StartPipelineExecutionCommand,
 } from '@aws-sdk/client-codepipeline';
 import { EventBridgeEvent } from 'aws-lambda';
-// import { PIPELINE_CONFIG } from '../../config';
 
 type TCodecommitEventDetail = {
   callerUserArn: string;

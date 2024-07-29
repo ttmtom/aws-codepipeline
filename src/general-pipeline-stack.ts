@@ -25,6 +25,8 @@ import {
   isCodebuildAction,
   isSourceAction,
 } from './types/config.type';
+import { CodecommitEventVariable } from './project-resource/codecommit-event-variable';
+import { getPipelineName } from './project-resource/helper';
 
 export class GeneralPipelineStack extends Stack {
   constructor(
@@ -75,15 +77,18 @@ class CaiPipeline extends Construct {
       this,
       `fwd-${commonConfig.projectName}-${pipelineName}-pipeline`,
       {
-        pipelineName: `fwd-${commonConfig.projectName}-${pipelineName}-pipeline`,
+        pipelineName: getPipelineName(commonConfig.projectName, pipelineName),
         pipelineType: PipelineType.V2,
-        variables: variables.map(
-          (envVar) =>
-            new Variable({
-              variableName: envVar.variableName,
-              defaultValue: envVar.defaultValue,
-            })
-        ),
+        variables: [
+          ...variables.map(
+            (envVar) =>
+              new Variable({
+                variableName: envVar.variableName,
+                defaultValue: envVar.defaultValue,
+              })
+          ),
+          ...CodecommitEventVariable,
+        ],
         restartExecutionOnUpdate: false,
         artifactBucket: s3.artifactBucket,
         role: roles.pipelineServiceRole,
@@ -108,12 +113,16 @@ class CaiPipeline extends Construct {
                 return new CodeBuildAction({
                   type: action.configuration.type ?? CodeBuildActionType.TEST,
                   actionName: action.name,
-                  project: this.getProject(projects, action.configuration.projectName),
+                  project: this.getProject(
+                    projects,
+                    action.configuration.projectName
+                  ),
                   input: this.getArtifact(action.configuration.inputArtifact),
                   outputs: action.configuration.hasOutput
                     ? [this.getArtifact(action.name)]
                     : [],
-                  environmentVariables: action.configuration.environmentVariables,
+                  environmentVariables:
+                    action.configuration.environmentVariables,
                   role: roles.pipelineServiceRole,
                 });
               } else if (isApprovalAction(action)) {
