@@ -14,6 +14,26 @@ import {
 } from '../types/config.type';
 import { GeneralPipelineStack } from '../general-pipeline-stack';
 
+function convertConfigYamlToJson() {
+  const yamlPath = path.join(__dirname, '../../../config.yaml');
+  const jsonPath = path.join(__dirname, '../../config.json');
+  try {
+    // Read the YAML file
+    const yamlContent = fs.readFileSync(yamlPath, 'utf-8');
+
+    // Parse the YAML content
+    const parsedContent = yaml.load(yamlContent);
+
+    // Convert the parsed content to JSON
+    const jsonContent = JSON.stringify(parsedContent, null, 2);
+
+    // Write the JSON content to a file
+    fs.writeFileSync(jsonPath, jsonContent, 'utf-8');
+  } catch (error) {
+    console.error('Error converting YAML to JSON:', error);
+  }
+}
+
 function createStack() {
   const app = new cdk.App();
   let appConfig: TGeneralPipelineConfig;
@@ -34,6 +54,8 @@ function createStack() {
     console.log(JSON.stringify(error, null, 2));
     throw error;
   }
+
+  convertConfigYamlToJson();
 
   dotenv.config({
     path: path.resolve(__dirname, `../../../.env`),

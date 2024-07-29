@@ -3,6 +3,10 @@ import {
   StartPipelineExecutionCommand,
 } from '@aws-sdk/client-codepipeline';
 import { EventBridgeEvent } from 'aws-lambda';
+import jsonObject from '../../config.json';
+import { TGeneralPipelineConfig } from '../../types/config.type';
+
+const CONFIG: TGeneralPipelineConfig = jsonObject;
 
 type TCodecommitEventDetail = {
   callerUserArn: string;
@@ -20,6 +24,7 @@ export const handler = async (
   event: EventBridgeEvent<string, TCodecommitEventDetail>
 ) => {
   console.log(event);
+  console.log(CONFIG);
   // const refName = event.detail.referenceName;
   //
   // const matchedEnv = PIPELINE_CONFIG.deployEnvs.find((deployEnv) => {
