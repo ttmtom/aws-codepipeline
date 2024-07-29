@@ -15,7 +15,7 @@ function createStack() {
   const app = new cdk.App();
   let appConfig: TPipelineConfig;
   try {
-    const yamlPath = path.join(__dirname, '../../config.yaml');
+    const yamlPath = path.join(__dirname, '../../../config.yaml');
     console.log('loading yaml config from path: ', yamlPath);
     const fileContent = fs.readFileSync(yamlPath, 'utf-8');
     console.log('yaml config loaded');
@@ -32,13 +32,8 @@ function createStack() {
   }
 
   dotenv.config({
-    path: path.resolve(__dirname, `../../.env`),
+    path: path.resolve(__dirname, `../../../.env`),
   });
-
-  if (!fs.existsSync(path.resolve(__dirname, '../../config.yaml.ts'))) {
-    console.error('config.yaml.ts not found');
-    throw new Error('config.yaml.ts not found');
-  }
 
   new GeneralPipelineStack(
     app,

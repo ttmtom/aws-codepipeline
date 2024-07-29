@@ -74,46 +74,14 @@ export class PipelineResource extends Construct implements IPipelineResource {
       removalPolicy: RemovalPolicy.DESTROY,
       versioned: true,
     });
-    const sources = {};
+    const sources: {
+      [key: string]: IRepository;
+    } = {};
     config.sources.map((source) => {
       sources[source.projectId] = new Repository(this, source.projectId, {
         repositoryName: source.repositoryName,
       });
     });
-
-    const projects = {};
-    config.codebuilds.forEach((build) => {
-      projects[build.projectName] = new PipelineProject(
-        this,
-        `codebuild-${build.projectName}`,
-        {
-          projectName: `${projectName}-${build.projectName}`,
-          environment: {
-            buildImage: LinuxBuildImage.fromCodeBuildImageId(
-              build.imageId ?? 'aws/codebuild/standard:7.0'
-            ),
-            computeType: build.computerType ?? ComputeType.SMALL,
-            environmentVariables: build.environmentVariables,
-          },
-          role: projectRole,
-          buildSpec: BuildSpec.fromObject(
-            yaml.load(
-              fs.readFileSync(
-                path.resolve(
-                  __dirname,
-                  `../../buildSpecs/${build.buildSpecYaml}`
-                ),
-                'utf8'
-              )
-            ) as {
-              [key: string]: never;
-            }
-          ),
-          timeout: Duration.minutes(build.timeout ?? 15),
-        }
-      );
-    });
-
     const pipelineServiceRole = DcpServiceRole.newRole(
       this,
       `PipelineServiceRole`,
@@ -139,22 +107,6 @@ export class PipelineResource extends Construct implements IPipelineResource {
         },
       }
     );
-
-    const eventTrigger = new NodejsFunction(this, 'OnCommitHandler', {
-      functionName: `${projectName}-pipeline-trigger-handler`,
-      runtime: Runtime.NODEJS_20_X,
-      entry: path.join(
-        __dirname,
-        '../lambda/handler/pipeline-trigger-handler.ts'
-      ),
-      handler: 'handler',
-      timeout: Duration.minutes(10),
-      role: lambdaRole,
-      bundling: {
-        tsconfig: path.join('./tsconfig.json'),
-        externalModules: ['aws-sdk'],
-      },
-    });
 
     const eventRole = DcpServiceRole.newRole(this, `EventRulesServiceRole`, {
       name: `${config.projectName}-rule-role`,
@@ -197,6 +149,57 @@ export class PipelineResource extends Construct implements IPipelineResource {
           actions: ['*'],
           resources: ['*'],
         },
+      },
+    });
+
+    const projects: {
+      [key: string]: Project;
+    } = {};
+    config.codebuilds.forEach((build) => {
+      projects[build.projectName] = new PipelineProject(
+        this,
+        `codebuild-${build.projectName}`,
+        {
+          projectName: `${projectName}-${build.projectName}`,
+          environment: {
+            buildImage: LinuxBuildImage.fromCodeBuildImageId(
+              build.imageId ?? 'aws/codebuild/standard:7.0'
+            ),
+            computeType: build.computerType ?? ComputeType.SMALL,
+            environmentVariables: build.environmentVariables,
+          },
+          role: projectRole,
+          buildSpec: BuildSpec.fromObject(
+            yaml.load(
+              fs.readFileSync(
+                path.resolve(
+                  __dirname,
+                  `../../../buildSpecs/${build.buildSpecYaml}`
+                ),
+                'utf8'
+              )
+            ) as {
+              [key: string]: never;
+            }
+          ),
+          timeout: Duration.minutes(build.timeout ?? 15),
+        }
+      );
+    });
+
+    const eventTrigger = new NodejsFunction(this, 'OnCommitHandler', {
+      functionName: `${projectName}-pipeline-trigger-handler`,
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(
+        __dirname,
+        '../lambda/handler/pipeline-trigger-handler.ts'
+      ),
+      handler: 'handler',
+      timeout: Duration.minutes(10),
+      role: lambdaRole,
+      bundling: {
+        tsconfig: path.join('./tsconfig.json'),
+        externalModules: ['aws-sdk'],
       },
     });
 
