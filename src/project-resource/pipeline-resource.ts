@@ -80,13 +80,11 @@ export class PipelineResource extends Construct implements IPipelineResource {
       [key: string]: IRepository;
     } = {};
     config.sources.map((source) => {
-      repositories[source.id] = new Repository(this, `repository-${source.id}`, {
-        repositoryName: source.repositoryName,
-      });
+      repositories[source.id] = Repository.fromRepositoryName(this, `repository-${source.id}`, source.repositoryName);
     });
     const pipelineServiceRole = DcpServiceRole.newRole(
       this,
-      `PipelineServiceRole`,
+      `pipeline-service-role`,
       {
         name: `${config.projectName}-pipeline-role`,
         description: `This service role will be used for ${config.projectName} Pipelines`,
@@ -110,7 +108,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       }
     );
 
-    const eventRole = DcpServiceRole.newRole(this, `EventRulesServiceRole`, {
+    const eventRole = DcpServiceRole.newRole(this, `event-service-role`, {
       name: `${config.projectName}-rule-role`,
       description: `This service role will be used for ${config.projectName} Event to start the pipelines`,
       trustRootPrincipal: false,
@@ -125,7 +123,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       },
     });
 
-    const projectRole = DcpServiceRole.newRole(this, `CodebuildProjectRole`, {
+    const projectRole = DcpServiceRole.newRole(this, `codebuild-project-role`, {
       name: `${config.projectName}-project-role`,
       description: `This service role will be used for ${config.projectName} Codebuild projects`,
       trustRootPrincipal: false,
@@ -135,7 +133,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       allowResourceActions: config.iam.codebuildRole.allowActions,
     });
 
-    const lambdaRole = DcpServiceRole.new(this, `LambdaServiceRole`, {
+    const lambdaRole = DcpServiceRole.new(this, `lambda-service-role`, {
       name: `${config.projectName}-pipeline-lambda-role`,
       description: `This service role will be used for ${config.projectName} Lambda functions`,
       trustRootPrincipal: false,
@@ -189,7 +187,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       );
     });
 
-    const eventTrigger = new NodejsFunction(this, 'OnCommitHandler', {
+    const eventTrigger = new NodejsFunction(this, 'trigger-handler', {
       functionName: `${projectName}-pipeline-trigger-handler`,
       runtime: Runtime.NODEJS_20_X,
       entry: path.join(
@@ -212,7 +210,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       artifactBucket,
     };
     this.codecommit = {
-      repositories: repositories,
+      repositories,
     };
     this.iam = {
       roles: {

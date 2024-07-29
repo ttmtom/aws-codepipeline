@@ -108,7 +108,7 @@ class CaiPipeline extends Construct {
                 return new CodeBuildAction({
                   type: action.configuration.type ?? CodeBuildActionType.TEST,
                   actionName: action.name,
-                  project: projects[action.name],
+                  project: this.getProject(projects, action.configuration.projectName),
                   input: this.getArtifact(action.configuration.inputArtifact),
                   outputs: action.configuration.hasOutput
                     ? [this.getArtifact(action.name)]
@@ -153,6 +153,21 @@ class CaiPipeline extends Construct {
   }
 
   private getArtifact(stage: string): Artifact {
+    if (this.artifacts[stage]) {
+      return this.artifacts[stage];
+    }
+    this.artifacts[stage] = new Artifact(stage);
     return this.artifacts[stage];
+  }
+
+  private getProject(
+    projects: PipelineResource['codebuild']['projects'],
+    projectId: string
+  ) {
+    const project = projects[projectId];
+    if (!project) {
+      throw new Error(`Project ${projectId} not found`);
+    }
+    return project;
   }
 }

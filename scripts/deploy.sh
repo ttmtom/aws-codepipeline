@@ -8,4 +8,4 @@ cd "$PIPELINE_DIR" || exit
 
 npm install
 
-cdk diff
+cdk deploy
