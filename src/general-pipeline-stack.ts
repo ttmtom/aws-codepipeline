@@ -83,8 +83,8 @@ class CaiPipeline extends Construct {
           ...variables.map(
             (envVar) =>
               new Variable({
-                variableName: envVar.variableName,
-                defaultValue: envVar.defaultValue,
+                variableName: envVar.name,
+                defaultValue: envVar.value,
               })
           ),
           ...CodecommitEventVariable,

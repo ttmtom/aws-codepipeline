@@ -131,8 +131,8 @@ const CodePipelineSchema = z.object({
   }),
   variables: z.array(
     z.object({
-      variableName: z.string(),
-      defaultValue: z.string().optional(),
+      name: z.string(),
+      value: z.string(),
     })
   ),
 });
