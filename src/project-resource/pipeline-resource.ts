@@ -15,7 +15,7 @@ import {
 } from 'aws-cdk-lib/aws-codebuild';
 import { DcpServiceRole } from '../common/iam/DcpRole';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { TPipelineConfig } from '../types/config.type';
+import { TGeneralPipelineConfig } from '../types/config.type';
 import path from 'path';
 import yaml from 'js-yaml';
 import * as fs from 'node:fs';
@@ -26,7 +26,7 @@ export interface IPipelineResource {
     artifactBucket: Bucket;
   };
   readonly codecommit: {
-    [key: string]: IRepository;
+    repositories: { [key: string]: IRepository };
   };
   readonly codebuild: {
     projects: {
@@ -48,7 +48,9 @@ export interface IPipelineResource {
 
 export class PipelineResource extends Construct implements IPipelineResource {
   readonly codebuild: { projects: { [p: string]: Project } };
-  readonly codecommit: { [p: string]: IRepository };
+  readonly codecommit: {
+    repositories: { [key: string]: IRepository };
+  };
   readonly iam: {
     roles: {
       pipelineServiceRole: DcpServiceRole;
@@ -60,7 +62,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
   readonly s3: { artifactBucket: Bucket };
   readonly lambdas: { eventTrigger: NodejsFunction };
 
-  constructor(scope: Construct, config: TPipelineConfig) {
+  constructor(scope: Construct, config: TGeneralPipelineConfig) {
     super(scope, 'Resources');
     const { projectName } = config;
 
@@ -74,11 +76,11 @@ export class PipelineResource extends Construct implements IPipelineResource {
       removalPolicy: RemovalPolicy.DESTROY,
       versioned: true,
     });
-    const sources: {
+    const repositories: {
       [key: string]: IRepository;
     } = {};
     config.sources.map((source) => {
-      sources[source.projectId] = new Repository(this, source.projectId, {
+      repositories[source.projectId] = new Repository(this, source.projectId, {
         repositoryName: source.repositoryName,
       });
     });
@@ -209,7 +211,9 @@ export class PipelineResource extends Construct implements IPipelineResource {
     this.s3 = {
       artifactBucket,
     };
-    this.codecommit = sources;
+    this.codecommit = {
+      repositories: repositories,
+    };
     this.iam = {
       roles: {
         pipelineServiceRole,
