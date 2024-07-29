@@ -67,9 +67,13 @@ const PipelineCodebuildActionSchema = PipelineActionBaseSchema.extend({
     projectName: z.string().min(1, { message: 'Project name is required' }),
     inputArtifact: z.string(),
     hasOutput: z.boolean().optional(),
-    environmentVariables: z.record(z.object({
-      value: z.string(),
-    })).optional(),
+    environmentVariables: z
+      .record(
+        z.object({
+          value: z.string(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -113,7 +117,15 @@ const CodePipelineSchema = z.object({
     repositories: z.array(z.string()),
     detail: z.object({
       referenceType: z.array(z.string()),
-      referenceName: z.array(z.string()),
+      referenceName: z.array(
+        z.union([
+          z.string(),
+          z.object({
+            prefix: z.string().optional(),
+            suffix: z.string().optional(),
+          }),
+        ])
+      ),
       event: z.array(z.string()),
     }),
   }),
