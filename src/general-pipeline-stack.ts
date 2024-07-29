@@ -64,7 +64,7 @@ class CaiPipeline extends Construct {
     const {
       s3,
       iam: { roles },
-      codecommit,
+      codecommit: { repositories },
       codebuild: { projects },
       lambdas,
     } = resource;
@@ -94,7 +94,10 @@ class CaiPipeline extends Construct {
               if (isSourceAction(action)) {
                 return new CodeCommitSourceAction({
                   actionName: action.name,
-                  repository: codecommit[action.configuration.repositoryId],
+                  repository: this.getRepository(
+                    repositories,
+                    action.configuration.repositoryId
+                  ),
                   output: this.getArtifact(action.name),
                   trigger: CodeCommitTrigger.NONE,
                   branch: action.configuration.branch ?? 'main',
@@ -121,6 +124,7 @@ class CaiPipeline extends Construct {
                   role: roles.pipelineServiceRole,
                 });
               }
+              throw new Error('Invalid action type');
             }),
           };
         }),
@@ -131,13 +135,23 @@ class CaiPipeline extends Construct {
       eventPattern: {
         source: ['aws.codecommit'],
         detailType: trigger.detailType,
-        resources: trigger.repositories.map((repos) => {
-          return codecommit[repos].repositoryArn;
-        }),
+        resources: trigger.repositories.map(
+          (repos) => this.getRepository(repositories, repos).repositoryArn
+        ),
         detail: trigger.detail,
       },
     });
     rule.addTarget(new targets.LambdaFunction(lambdas.eventTrigger));
+  }
+
+  private getRepository(
+    repositories: PipelineResource['codecommit']['repositories'],
+    repositoryId: string
+  ) {
+    if (!repositories[repositoryId]) {
+      throw new Error(`Repository ${repositoryId} not found`);
+    }
+    return repositories[repositoryId];
   }
 
   private getArtifact(stage: string): Artifact {
