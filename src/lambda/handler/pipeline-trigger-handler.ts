@@ -45,12 +45,32 @@ export const handler = async (
 
     const command = new StartPipelineExecutionCommand({
       name: getPipelineName(CONFIG.projectName, matchedPipeline.pipelineName),
-      variables: Object.keys(event.detail).flatMap((key) => {
-        return {
-          name: `EVENT_${key}`,
-          value: event.detail[key],
-        };
-      }),
+      variables: [
+        {
+          name: 'EVENT_commitId',
+          value: event.detail.commitId,
+        },
+        {
+          name: 'EVENT_event',
+          value: event.detail.event,
+        },
+        {
+          name: 'EVENT_oldCommitId',
+          value: event.detail.oldCommitId,
+        },
+        {
+          name: 'EVENT_referenceName',
+          value: event.detail.referenceName,
+        },
+        {
+          name: 'EVENT_referenceType',
+          value: event.detail.referenceType,
+        },
+        {
+          name: 'EVENT_repositoryName',
+          value: event.detail.repositoryName,
+        },
+      ],
     });
 
     try {
