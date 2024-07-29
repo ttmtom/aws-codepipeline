@@ -1,7 +1,4 @@
 import { Construct } from 'constructs';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
 import { IRepository, Repository } from 'aws-cdk-lib/aws-codecommit';
 import {
   BlockPublicAccess,
@@ -9,79 +6,110 @@ import {
   BucketEncryption,
 } from 'aws-cdk-lib/aws-s3';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
-// import {
-//   BuildSpec,
-//   ComputeType,
-//   LinuxBuildImage,
-//   PipelineProject,
-//   Project,
-// } from 'aws-cdk-lib/aws-codebuild';
+import {
+  BuildSpec,
+  ComputeType,
+  LinuxBuildImage,
+  PipelineProject,
+  Project,
+} from 'aws-cdk-lib/aws-codebuild';
 import { DcpServiceRole } from '../common/iam/DcpRole';
-import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { TPipelineConfig } from '../types/config.type';
+import path from 'path';
+import yaml from 'js-yaml';
+import * as fs from 'node:fs';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
 
 export interface IPipelineResource {
-  // readonly s3: {
-  //   artifactBucket: Bucket;
-  // };
-  // readonly event: {
-  //   eventRole: DcpServiceRole;
-  //   trigger: NodejsFunction;
-  //   lambdaRole: DcpServiceRole;
-  // };
-  // readonly codepipeline: {
-  //   pipelineServiceRole: DcpServiceRole;
-  //   // envConfigs: TDeployEnv[];
-  // };
-  readonly codecommit: {
-    repository: IRepository;
+  readonly s3: {
+    artifactBucket: Bucket;
   };
-  // readonly codebuild: {
-  //   projects: {
-  //     [id: string]: Project;
-  //   };
-  // };
+  readonly codecommit: {
+    [key: string]: IRepository;
+  };
+  readonly codebuild: {
+    projects: {
+      [id: string]: Project;
+    };
+  };
+  readonly iam: {
+    roles: {
+      pipelineServiceRole: DcpServiceRole;
+      eventRole: DcpServiceRole;
+      lambdaRole: DcpServiceRole;
+      projectRole: DcpServiceRole;
+    };
+  };
+  readonly lambdas: {
+    eventTrigger: NodejsFunction;
+  };
 }
 
 export class PipelineResource extends Construct implements IPipelineResource {
-  // readonly codebuild: { projects: { [p: string]: Project } };
-  readonly codecommit: { repository: IRepository };
-  readonly codepipeline: {
-    pipelineServiceRole: DcpServiceRole;
-    // envConfigs: TDeployEnv[];
+  readonly codebuild: { projects: { [p: string]: Project } };
+  readonly codecommit: { [p: string]: IRepository };
+  readonly iam: {
+    roles: {
+      pipelineServiceRole: DcpServiceRole;
+      eventRole: DcpServiceRole;
+      lambdaRole: DcpServiceRole;
+      projectRole: DcpServiceRole;
+    };
   };
-  readonly event: {
-    eventRole: DcpServiceRole;
-    trigger: NodejsFunction;
-    lambdaRole: DcpServiceRole;
-  };
-
-  // readonly s3: { artifactBucket: Bucket };
+  readonly s3: { artifactBucket: Bucket };
+  readonly lambdas: { eventTrigger: NodejsFunction };
 
   constructor(scope: Construct, config: TPipelineConfig) {
     super(scope, 'Resources');
+    const { projectName } = config;
 
-    const repository = Repository.fromRepositoryName(
-      this,
-      'SourceRepos',
-      config.source
-    );
+    const artifactBucket = new Bucket(this, `${projectName}-artifact-bucket`, {
+      bucketName: `${projectName}-artifact-bucket`,
+      enforceSSL: true,
+      publicReadAccess: false,
+      encryption: BucketEncryption.S3_MANAGED,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      autoDeleteObjects: false,
+      removalPolicy: RemovalPolicy.DESTROY,
+      versioned: true,
+    });
+    const sources = {};
+    config.sources.map((source) => {
+      sources[source.projectId] = new Repository(this, source.projectId, {
+        repositoryName: source.repositoryName,
+      });
+    });
 
-    const artifactBucket = new Bucket(
-      this,
-      `${config.projectName}-artifact-bucket`,
-      {
-        bucketName: `${config.projectName}-artifact-bucket`,
-        enforceSSL: true,
-        publicReadAccess: false,
-        encryption: BucketEncryption.S3_MANAGED,
-        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-        autoDeleteObjects: false,
-        removalPolicy: RemovalPolicy.DESTROY,
-        versioned: true,
-      }
-    );
+    const projects = {};
+    config.codebuilds.forEach((build) => {
+      projects[build.projectName] = new PipelineProject(
+        this,
+        `codebuild-${build.projectName}`,
+        {
+          projectName: `${projectName}-${build.projectName}`,
+          environment: {
+            buildImage: LinuxBuildImage.fromCodeBuildImageId(
+              build.imageId ?? 'aws/codebuild/standard:7.0'
+            ),
+            computeType: build.computerType ?? ComputeType.SMALL,
+            environmentVariables: build.environmentVariables,
+          },
+          role: projectRole,
+          buildSpec: BuildSpec.fromObject(
+            yaml.load(
+              fs.readFileSync(
+                path.resolve(__dirname, `../buildSpecs/${build.buildSpecYaml}`),
+                'utf8'
+              )
+            ) as {
+              [key: string]: never;
+            }
+          ),
+          timeout: Duration.minutes(build.timeout ?? 15),
+        }
+      );
+    });
 
     const pipelineServiceRole = DcpServiceRole.newRole(
       this,
@@ -91,10 +119,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
         description: `This service role will be used for ${config.projectName} Pipelines`,
         trustRootPrincipal: false,
         principal: {
-          services: [
-            // ...config.iam.pipelineServiceRole?.principalServices,
-            'codepipeline',
-          ],
+          services: ['codepipeline'],
         },
         allowResourceActions: {
           s3: {
@@ -111,6 +136,22 @@ export class PipelineResource extends Construct implements IPipelineResource {
         },
       }
     );
+
+    const eventTrigger = new NodejsFunction(this, 'OnCommitHandler', {
+      functionName: `${projectName}-pipeline-trigger-handler`,
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(
+        __dirname,
+        '../lambda/handler/pipeline-trigger-handler.ts'
+      ),
+      handler: 'handler',
+      timeout: Duration.minutes(10),
+      role: lambdaRole,
+      bundling: {
+        tsconfig: path.join('./tsconfig.json'),
+        externalModules: ['aws-sdk'],
+      },
+    });
 
     const eventRole = DcpServiceRole.newRole(this, `EventRulesServiceRole`, {
       name: `${config.projectName}-rule-role`,
@@ -156,23 +197,23 @@ export class PipelineResource extends Construct implements IPipelineResource {
       },
     });
 
-    // this.codebuild = {
-    //   projects,
-    // };
-    // this.s3 = {
-    //   artifactBucket,
-    // };
-    this.codecommit = {
-      repository,
+    this.codebuild = {
+      projects,
     };
-    // this.event = {
-    //   eventRole,
-    //   trigger: handler,
-    //   lambdaRole,
-    // };
-    // this.codepipeline = {
-    //   pipelineServiceRole,
-    //   // envConfigs,
-    // };
+    this.s3 = {
+      artifactBucket,
+    };
+    this.codecommit = sources;
+    this.iam = {
+      roles: {
+        pipelineServiceRole,
+        eventRole,
+        lambdaRole,
+        projectRole,
+      },
+    };
+    this.lambdas = {
+      eventTrigger,
+    };
   }
 }

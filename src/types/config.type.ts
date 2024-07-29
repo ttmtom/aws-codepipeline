@@ -2,7 +2,9 @@ import { z } from 'zod';
 import {
   BuildEnvironmentVariable,
   BuildEnvironmentVariableType,
+  ComputeType,
 } from 'aws-cdk-lib/aws-codebuild';
+import { Duration } from 'aws-cdk-lib/core';
 
 const BuildEnvironmentVariableSchema: z.ZodType<BuildEnvironmentVariable> =
   z.object({
@@ -20,16 +22,26 @@ const IamServiceRoleSchema = z.object({
   principalServices: z.array(z.string()),
 });
 
+const CodebuildConfigSchema = z.object({
+  projectName: z.string().min(1, { message: 'Project name is required' }),
+  buildSpecYaml: z.string().min(1, { message: 'Build spec is required' }),
+  environmentVariables: z.record(BuildEnvironmentVariableSchema).optional(),
+  imageId: z.string().optional(),
+  computerType: z.nativeEnum(ComputeType).optional(),
+  timeout: z.number().max(15).optional(),
+});
+
 export const PipelineConfigSchema = z.object({
   projectName: z.string().min(1, { message: 'Project name is required' }),
-  source: z.string().min(1, { message: 'Source is required' }),
-  codebuilds: z.array(
+  sources: z.array(
     z.object({
-      projectName: z.string().min(1, { message: 'Project name is required' }),
-      buildSpecYaml: z.string().min(1, { message: 'Build spec is required' }),
-      environmentVariables: z.record(BuildEnvironmentVariableSchema).optional(),
+      projectId: z.string().min(1, { message: 'Project id is required' }),
+      repositoryName: z
+        .string()
+        .min(1, { message: 'Repository name is required' }),
     })
   ),
+  codebuilds: z.array(CodebuildConfigSchema),
   iam: z.object({
     // pipelineServiceRole: IamServiceRoleSchema.optional(),
     // eventRole: IamServiceRoleSchema.optional(),
