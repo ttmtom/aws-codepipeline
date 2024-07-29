@@ -16,7 +16,7 @@ import { GeneralPipelineStack } from '../general-pipeline-stack';
 
 function convertConfigYamlToJson() {
   const yamlPath = path.join(__dirname, '../../../config.yaml');
-  const jsonPath = path.join(__dirname, '../../config.json');
+  const jsonPath = path.join(__dirname, '../config.json');
   try {
     // Read the YAML file
     const yamlContent = fs.readFileSync(yamlPath, 'utf-8');
