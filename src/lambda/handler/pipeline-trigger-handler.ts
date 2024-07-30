@@ -25,6 +25,9 @@ export const handler = async (
   event: EventBridgeEvent<string, TCodecommitEventDetail>
 ) => {
   console.log(event);
+  if (!event.detail.commitId) {
+    throw new Error('Unexpected event detail, missing commitId');
+  }
   const refName = event.detail.referenceName;
 
   const matchedPipeline = CONFIG.codePipelines.find((pipelineConfig) => {
@@ -59,23 +62,23 @@ export const handler = async (
         },
         {
           name: 'EVENT_event',
-          value: event.detail.event,
+          value: event.detail.event ?? 'error:empty',
         },
         {
           name: 'EVENT_oldCommitId',
-          value: event.detail.oldCommitId,
+          value: event.detail.oldCommitId ?? 'error:empty',
         },
         {
           name: 'EVENT_referenceName',
-          value: event.detail.referenceName,
+          value: event.detail.referenceName ?? 'error:empty',
         },
         {
           name: 'EVENT_referenceType',
-          value: event.detail.referenceType,
+          value: event.detail.referenceType ?? 'error:empty',
         },
         {
           name: 'EVENT_repositoryName',
-          value: event.detail.repositoryName,
+          value: event.detail.repositoryName ?? 'error:empty',
         },
       ],
     });
