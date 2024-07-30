@@ -1,4 +1,4 @@
-projectName: "sample"
+projectName: "orchestrator"
 iam:
   codebuildRole:
     principalServices:
@@ -31,32 +31,57 @@ iam:
         resources:
           - '*'
 sources:
-  - projectId: "bot-config"
-    repositoryName: "cai-bot-configurations"
+  - id: "orchestrator"
+    repositoryName: "cai-llm-orchestrator-service"
 codebuilds:
-  - projectName: "test"
-    buildSpecYaml: "buildspec-test.yaml"
   - projectName: "deploy"
-    buildSpecYaml: "buildspec-deploy.yaml"
-pipelines:
-  - name: "pipeline-name"
-    triggers:
-
-    action:
-      - name: "source"
-        provider: "CodeCommit"
-        outputArtifacts:
-          - "source"
-        configuration:
-          repositoryName: "cai-commerce-external-channel-services"
-          branchName: "master"
-      - name: "test"
-        provider: "CodeBuild"
-        owner: "AWS"
-        version: "1"
-        inputArtifacts:
-          - "source"
-        configuration:
-          projectName: "test"
-      - name: "approve"
-        provider: "Manual"
+    buildSpecYaml: "deploy.yaml"
+codePipelines:
+  - pipelineName: "dev-tom"
+    trigger:
+      id: "dev-tom"
+      detailType:
+        - "CodeCommit Repository State Change"
+      repositories:
+        - "bot-config"
+      detail:
+        referenceName:
+          - prefix: "prefix/"
+            suffix: "suffix"
+          - "branch-name"
+        referenceType:
+          - "branch"
+          - "tag"
+        event:
+          - "referenceCreated"
+          - "referenceUpdated"
+    stages:
+      - stageName: "source"
+        actions:
+          - name: "source"
+            type: "source"
+            configuration:
+              repositoryId: "orchestrator"
+              branch: "main-fc"
+      - stageName: "test"
+        actions:
+          - name: "test"
+            type: "codebuild"
+            configuration:
+              type: 1
+              projectName: "test"
+              inputArtifact: "source"
+      - stageName: "approval"
+        actions:
+          - name: "approve"
+            type: "approval"
+      - stageName: "build"
+        actions:
+          - name: "build"
+            type: "codebuild"
+            configuration:
+              projectName: "deploy"
+              inputArtifact: "source"
+    variables:
+      - name: "ENV"
+        value: "dev-tom"
