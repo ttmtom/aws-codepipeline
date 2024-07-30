@@ -45,6 +45,13 @@ export const handler = async (
 
     const command = new StartPipelineExecutionCommand({
       name: getPipelineName(CONFIG.projectName, matchedPipeline.pipelineName),
+      sourceRevisions: [
+        {
+          actionName: matchedPipeline.stages[0].actions[0].name,
+          revisionType: 'COMMIT_ID',
+          revisionValue: event.detail.commitId,
+        },
+      ],
       variables: [
         {
           name: 'EVENT_commitId',
