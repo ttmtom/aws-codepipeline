@@ -14,7 +14,7 @@ export const CodecommitEventVariable: Variable[] = [
     variableName: `EVENT_referenceName`,
   }),
   new Variable({
-    variableName: `evnet_referenceType`,
+    variableName: `EVENT_referenceType`,
   }),
   new Variable({
     variableName: `EVENT_repositoryName`,
