@@ -74,8 +74,10 @@ export const handler = async (
     });
 
     try {
+      console.log('----- command');
+      console.log(JSON.stringify(command, null, 2));
       const data = await client.send(command);
-      console.log(JSON.stringify(data));
+      console.log(JSON.stringify(data, null, 2));
     } catch (error) {
       console.log('--error--');
       console.log(JSON.stringify(error));
