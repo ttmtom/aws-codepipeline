@@ -40,14 +40,14 @@ It is used to easy to create a pipeline using AWS service, CodePipeline, CodeBui
 | iam           | Object of aws role for codebuild to assume and do the required actions |              Object of [iam role](#iam) |        Y |           -- |     N/A |
 | codePipelines |              List of codepipeline needed for the project               | Object of [codepipeline](#codepipeline) |        Y |           -- |     N/A |
 
-#### source <a name="source">
+#### source
 
 | Key            |            description            |   type | required |                      example | default |
 |----------------|:---------------------------------:|-------:|---------:|-----------------------------:|--------:|
 | id             | the unique id for this repository | string |        Y |                 orchestrator |     N/A |
 | repositoryName |    the name of the repository     | string |        Y | cai-llm-orchestrator-service |     N/A |
 
-#### codebuild <a name="codebuild">
+#### codebuild
 
 | Key                               |                         description                          |                    type | required |             example |                      default |
 |-----------------------------------|:------------------------------------------------------------:|------------------------:|---------:|--------------------:|-----------------------------:|
@@ -61,7 +61,7 @@ It is used to easy to create a pipeline using AWS service, CodePipeline, CodeBui
 | computerType                      |             The computer type for this codebuild             | aws enume `ComputeType` |        N | `ComputeType.SMALL` |          `ComputeType.SMALL` |
 | timeout                           |               The computer timeout in minutes                |         number (1 - 15) |        N |                  10 |                           15 |
 
-#### iam <a name="iam">
+#### iam
 
 | Key           |               description                |          type | required | example | default |
 |---------------|:----------------------------------------:|--------------:|---------:|--------:|--------:|
@@ -77,7 +77,7 @@ It is used to easy to create a pipeline using AWS service, CodePipeline, CodeBui
 | allowActions[serviceName][resources] |            Array of resources            | Array of string |        Y |         `*`, `{arn}` |     N/A |
 | principalServices                    |       Array of principal services        | Array of string |        Y |          `codebuild` |     N/A |
 
-#### codepipeline <a name="codepipeline">
+#### codepipeline
 
 | Key                            |                    description                    |              type | required |                                         example | default |
 |--------------------------------|:-------------------------------------------------:|------------------:|---------:|------------------------------------------------:|--------:|
