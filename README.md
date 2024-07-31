@@ -97,7 +97,7 @@ It is used to easy to create a pipeline using AWS service, CodePipeline, CodeBui
 | variables[name]                |             The variable unique name              |            string |        Y |                              `ENVIRONMENT_CODE` |     N/A |
 | variables[value]               |                The variable value                 |            string |        Y |                                           `dev` |     N/A |
 
-##### action
+##### action <a id="action"></a>
 
 codebuild action
 
