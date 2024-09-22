@@ -13,7 +13,7 @@ import {
   PipelineProject,
   Project,
 } from 'aws-cdk-lib/aws-codebuild';
-import { DcpServiceRole } from '../common/iam/DcpRole';
+import { ServiceRole } from '../common/iam/IamRole';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { TGeneralPipelineConfig } from '../types/config.type';
 import path from 'path';
@@ -35,10 +35,10 @@ export interface IPipelineResource {
   };
   readonly iam: {
     roles: {
-      pipelineServiceRole: DcpServiceRole;
-      eventRole: DcpServiceRole;
-      lambdaRole: DcpServiceRole;
-      projectRole: DcpServiceRole;
+      pipelineServiceRole: ServiceRole;
+      eventRole: ServiceRole;
+      lambdaRole: ServiceRole;
+      projectRole: ServiceRole;
     };
   };
   readonly lambdas: {
@@ -53,10 +53,10 @@ export class PipelineResource extends Construct implements IPipelineResource {
   };
   readonly iam: {
     roles: {
-      pipelineServiceRole: DcpServiceRole;
-      eventRole: DcpServiceRole;
-      lambdaRole: DcpServiceRole;
-      projectRole: DcpServiceRole;
+      pipelineServiceRole: ServiceRole;
+      eventRole: ServiceRole;
+      lambdaRole: ServiceRole;
+      projectRole: ServiceRole;
     };
   };
   readonly s3: { artifactBucket: Bucket };
@@ -80,9 +80,13 @@ export class PipelineResource extends Construct implements IPipelineResource {
       [key: string]: IRepository;
     } = {};
     config.sources.map((source) => {
-      repositories[source.id] = Repository.fromRepositoryName(this, `repository-${source.id}`, source.repositoryName);
+      repositories[source.id] = Repository.fromRepositoryName(
+        this,
+        `repository-${source.id}`,
+        source.repositoryName
+      );
     });
-    const pipelineServiceRole = DcpServiceRole.newRole(
+    const pipelineServiceRole = ServiceRole.newRole(
       this,
       `pipeline-service-role`,
       {
@@ -108,7 +112,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       }
     );
 
-    const eventRole = DcpServiceRole.newRole(this, `event-service-role`, {
+    const eventRole = ServiceRole.newRole(this, `event-service-role`, {
       name: `${config.projectName}-rule-role`,
       description: `This service role will be used for ${config.projectName} Event to start the pipelines`,
       trustRootPrincipal: false,
@@ -123,7 +127,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       },
     });
 
-    const projectRole = DcpServiceRole.newRole(this, `codebuild-project-role`, {
+    const projectRole = ServiceRole.newRole(this, `codebuild-project-role`, {
       name: `${config.projectName}-project-role`,
       description: `This service role will be used for ${config.projectName} Codebuild projects`,
       trustRootPrincipal: false,
@@ -133,7 +137,7 @@ export class PipelineResource extends Construct implements IPipelineResource {
       allowResourceActions: config.iam.codebuildRole.allowActions,
     });
 
-    const lambdaRole = DcpServiceRole.new(this, `lambda-service-role`, {
+    const lambdaRole = ServiceRole.new(this, `lambda-service-role`, {
       name: `${config.projectName}-pipeline-lambda-role`,
       description: `This service role will be used for ${config.projectName} Lambda functions`,
       trustRootPrincipal: false,

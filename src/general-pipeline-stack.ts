@@ -16,7 +16,6 @@ import {
 } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Rule } from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import { DcpHelper } from './common/helper/DcpHelper';
 import { PipelineResource } from './project-resource/pipeline-resource';
 import {
   TGeneralPipelineConfig,
@@ -37,13 +36,6 @@ export class GeneralPipelineStack extends Stack {
   ) {
     super(scope, id, {
       ...props,
-      ...{
-        synthesizer: new DefaultStackSynthesizer({
-          generateBootstrapVersionRule: false,
-          qualifier: 'dcp-svc',
-          ...DcpHelper.getCdkOverrideRoles(props.env),
-        }),
-      },
     });
 
     const pr = new PipelineResource(this, config);
@@ -75,7 +67,7 @@ class CaiPipeline extends Construct {
 
     const cicd = new Pipeline(
       this,
-      `fwd-${commonConfig.projectName}-${pipelineName}-pipeline`,
+      `${commonConfig.projectName}-${pipelineName}-pipeline`,
       {
         pipelineName: getPipelineName(commonConfig.projectName, pipelineName),
         pipelineType: PipelineType.V2,

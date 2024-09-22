@@ -1,6 +1,6 @@
 # Cai common pipeline
 
-This is a common pipeline module for Cai project.
+This is a common pipeline module for aws project.
 It is used to easy to create a pipeline using AWS service, CodePipeline, CodeBuild, S3 and Lambda.
 
 ## How to use
